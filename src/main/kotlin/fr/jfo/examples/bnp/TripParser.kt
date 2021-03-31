@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import fr.jfo.examples.bnp.Either.Left
 import fr.jfo.examples.bnp.Either.Right
 import fr.jfo.examples.bnp.error.TripIncompleteException
-import fr.jfo.examples.bnp.model.TravelTags
+import fr.jfo.examples.bnp.model.TravelTaps
 import fr.jfo.examples.bnp.model.Trip
 import java.io.File
 import java.io.FileInputStream
@@ -19,9 +19,9 @@ class TripParser {
     fun parse(file: File): List<Either<Throwable, Trip>> = parse(FileInputStream(file))
 
     fun parse(inputStream: InputStream): List<Either<Throwable, Trip>> {
-        val travelTags: TravelTags = this.mapper.readValue(inputStream.readBytes())
-        return travelTags.tags
-            .also { println("${it.size} tags imported.") }
+        val travelTaps: TravelTaps = this.mapper.readValue(inputStream.readBytes())
+        return travelTaps.taps
+            .also { println("${it.size} taps imported.") }
             .groupBy { it.customerId }
             .flatMap { it.value.chunked(2) }
             .map { when (it.size) {

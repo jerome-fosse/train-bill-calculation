@@ -1,7 +1,7 @@
 package fr.jfo.examples.bnp.error
 
-import fr.jfo.examples.bnp.model.Tag
+import fr.jfo.examples.bnp.model.Tap
 import java.time.Instant
 
-class TripIncompleteException(tag: Tag) :
-    RuntimeException("Missing second tag for trip of customer ${tag.customerId} started at ${Instant.ofEpochMilli(tag.unixTimestamp)} at station ${tag.station}")
+class TripIncompleteException(tap: Tap) :
+    RuntimeException("Missing second tap for trip of customer ${tap.customerId} started at ${Instant.ofEpochMilli(tap.unixTimestamp)} at station ${tap.station}")

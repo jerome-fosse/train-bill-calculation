@@ -9,11 +9,11 @@ import java.io.ByteArrayInputStream
 class TripParserTest {
 
     @Test
-    fun `when there is two tags for the same client it should return a trip`() {
-        // Given a source file with two tags for the same customer
+    fun `when there is two taps for the same client it should return a trip`() {
+        // Given a source file with two taps for the same customer
         val source = """
             {
-                "tags" : [
+                "taps" : [
                     {
                       "unixTimestamp": 10,
                       "customerId": 1,
@@ -39,11 +39,11 @@ class TripParserTest {
     }
 
     @Test
-    fun `when there is four tags for the same client it should return two trips`() {
-        // Given a source file with four tags for the same customer
+    fun `when there is four taps for the same client it should return two trips`() {
+        // Given a source file with four taps for the same customer
         val source = """
             {
-                "tags" : [
+                "taps" : [
                     {
                       "unixTimestamp": 10,
                       "customerId": 1,
@@ -86,11 +86,11 @@ class TripParserTest {
     }
 
     @Test
-    fun `when there is an odd number of tags for a customer then the last trip should be on error`() {
-        // Given a source file with three tags for the same customer
+    fun `when there is an odd number of taps for a customer then the last trip should be on error`() {
+        // Given a source file with three taps for the same customer
         val source = """
             {
-                "tags" : [
+                "taps" : [
                     {
                       "unixTimestamp": 10,
                       "customerId": 1,
@@ -125,15 +125,15 @@ class TripParserTest {
         // And the second trip is in fact an error
         assertThat(trips[1].isLeft).isTrue
         assertThat(trips[1].left()).isInstanceOf(TripIncompleteException::class.java)
-        assertThat(trips[1].left()?.message).isEqualTo("Missing second tag for trip of customer 1 started at 1970-01-01T00:00:00.015Z at station G")
+        assertThat(trips[1].left()?.message).isEqualTo("Missing second tap for trip of customer 1 started at 1970-01-01T00:00:00.015Z at station G")
     }
 
     @Test
-    fun `when there is tags for more than one customer it should retrieve the travels for each customers`() {
-        // Given a source file with tags for two customers
+    fun `when there is taps for more than one customer it should retrieve the travels for each customers`() {
+        // Given a source file with taps for two customers
         val source = """
             {
-                "tags" : [
+                "taps" : [
                     {
                       "unixTimestamp": 10,
                       "customerId": 1,
@@ -190,11 +190,11 @@ class TripParserTest {
     }
 
     @Test
-    fun `when customers's tags are mixed it should retrieve the travels for each customers anyway `() {
-        // Given a source file with tags for two customers
+    fun `when customers's taps are mixed it should retrieve the travels for each customers anyway `() {
+        // Given a source file with taps for two customers
         val source = """
             {
-                "tags" : [
+                "taps" : [
                     {
                       "unixTimestamp": 10,
                       "customerId": 1,

@@ -48,7 +48,7 @@ class Billing {
                 showUsage(options)
             }
 
-            println("Importing tags...")
+            println("Importing taps...")
             var trips = loadCustomersTrips(cmd.getOptionValue("s"))
 
         } catch (e: ParseException) {
@@ -68,9 +68,9 @@ class Billing {
                 pair
             }
             .also { pair ->
-                println("${pair.first.size} error(s) found during tags import.")
+                println("${pair.first.size} error(s) during taps import.")
                 pair.first.forEach { println (it.message) }
-                println("${pair.second.size} trip(s) found.")
+                println("${pair.second.size} trip(s) imported.")
             }
             .second
     }
