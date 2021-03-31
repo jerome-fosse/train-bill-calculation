@@ -1,6 +1,8 @@
 package fr.jfo.examples.bnp
 
+import fr.jfo.examples.bnp.model.Trip
 import org.apache.commons.cli.*
+import java.io.File
 
 class Billing {
 
@@ -41,15 +43,41 @@ class Billing {
 
     fun run(options: Options, args: Array<String>) {
         try {
-            val parser = DefaultParser()
-            val cmd = parser.parse(options, args)
+            val cmd = parseCommandLine(options, args)
             if (cmd.hasOption("h")) {
                 showUsage(options)
             }
+
+            println("Importing tags...")
+            var trips = loadCustomersTrips(cmd.getOptionValue("s"))
+
         } catch (e: ParseException) {
             println("Syntax error. " + e.message)
             showUsage(options)
         }
+    }
+
+    private fun loadCustomersTrips(fileName: String): List<Trip> {
+        val tripParser = TripParser();
+        return tripParser.parse(File(fileName))
+            .foldRight(Pair(ArrayList<Throwable>(), ArrayList<Trip>())) {either, pair ->
+                when (either) {
+                    is Either.Left -> pair.first.add(either.value)
+                    is Either.Right -> pair.second.add(either.value)
+                }
+                pair
+            }
+            .also { pair ->
+                println("${pair.first.size} error(s) found during tags import.")
+                pair.first.forEach { println (it.message) }
+                println("${pair.second.size} trip(s) found.")
+            }
+            .second
+    }
+
+    private fun parseCommandLine(options: Options, args: Array<String>): CommandLine {
+        val parser = DefaultParser()
+        return parser.parse(options, args)
     }
 
     private fun showUsage(options: Options) {
