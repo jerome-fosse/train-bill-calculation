@@ -58,8 +58,8 @@ class Billing {
     }
 
     private fun loadCustomersTrips(fileName: String): List<Trip> {
-        val tripParser = TripParser();
-        return tripParser.parse(File(fileName))
+        val tripParser = TripService();
+        return tripParser.parseTaps(File(fileName))
             .foldRight(Pair(ArrayList<Throwable>(), ArrayList<Trip>())) {either, pair ->
                 when (either) {
                     is Either.Left -> pair.first.add(either.value)
