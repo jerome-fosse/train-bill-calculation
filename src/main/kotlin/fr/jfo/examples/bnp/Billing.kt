@@ -10,7 +10,6 @@ import fr.jfo.examples.bnp.model.CustomerSummary
 import fr.jfo.examples.bnp.model.Trip
 import org.apache.commons.cli.*
 import java.io.File
-import java.io.FileOutputStream
 
 class Billing {
     private val tripService = TripService();
@@ -59,38 +58,44 @@ class Billing {
                         is Right -> Right(trip.copy(zoneFrom = either.value.zoneFrom, zoneTo = either.value.zoneTo, costInCents = either.value.costInCents))
                     }
                 }
-                .groupBy { it.isLeft }
-                .also {
-                    println("${it[true]?.size ?: 0} error(s) while calculating prices.")
-                    it[true]?.forEach { err -> println(err.left()?.message) }
+                .foldRight(Pair(mutableListOf<Left<Throwable>>(), mutableListOf<Right<Trip>>())) { either, acc ->
+                    when (either) {
+                        is Left -> acc.first.add(either)
+                        is Right -> acc.second.add(either)
+                    }
+                    acc
                 }
-                .filter { it.key == false }
-                .flatMap { it.value }
-                .map { it.right()!! }
+                .also {
+                    println("${it.first.size} error(s) while calculating prices.")
+                    it.first.forEach { err -> println(err.value.message) }
+                }
+                .second
+                .map { it.value }
                 .groupBy { it.customerId }
                 .map {
-                    val totalPrice = it.value.sumOf { price -> price.costInCents!! }
+                    val totalPrice = it.value.sumOf { price -> price.costInCents ?: 0}
                     CustomerSummary(customerId = it.key, totalCostInCents = totalPrice, trips = it.value.sortedBy { trip -> trip.startedJourneyAt })
                 }
                 .sortedBy { it.customerId }
 
-
-            File(cmd.getOptionValue("d")).printWriter()
-                .use { out ->
-                    println("Writing result to ${cmd.getOptionValue("d")}")
-                    out.write(mapper.writeValueAsString(BillingReport(summaries)))
-                }
-
-
+            writeResultFile(cmd.getOptionValue("d"), summaries)
         } catch (e: ParseException) {
             println("Syntax error. " + e.message)
             showUsage(options)
         }
     }
 
+    private fun writeResultFile(destFileName: String, summaries: List<CustomerSummary>) {
+        File(destFileName).printWriter()
+            .use { out ->
+                println("Writing result to $destFileName")
+                out.write(mapper.writeValueAsString(BillingReport(summaries)))
+            }
+    }
+
     private fun loadCustomersTrips(fileName: String): List<Trip> {
         return tripService.parseTaps(File(fileName))
-            .foldRight(Pair(ArrayList<Throwable>(), ArrayList<Trip>())) {either, acc ->
+            .foldRight(Pair(mutableListOf<Throwable>(), mutableListOf<Trip>())) { either, acc ->
                 when (either) {
                     is Left -> acc.first.add(either.value)
                     is Right -> acc.second.add(either.value)
