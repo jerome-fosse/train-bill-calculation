@@ -1,6 +1,9 @@
 package fr.jfo.examples.bnp.model
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 data class Trip(
+    @JsonIgnore
     val customerId: Int,
     val stationStart: String,
     val stationEnd: String,

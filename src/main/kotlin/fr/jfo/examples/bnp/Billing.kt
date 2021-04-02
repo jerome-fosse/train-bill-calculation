@@ -1,10 +1,20 @@
 package fr.jfo.examples.bnp
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import fr.jfo.examples.bnp.Either.Left
+import fr.jfo.examples.bnp.Either.Right
+import fr.jfo.examples.bnp.model.BillingReport
+import fr.jfo.examples.bnp.model.CustomerSummary
 import fr.jfo.examples.bnp.model.Trip
 import org.apache.commons.cli.*
 import java.io.File
+import java.io.FileOutputStream
 
 class Billing {
+    private val tripService = TripService();
+    private val mapper = ObjectMapper().registerModule(KotlinModule()).enable(SerializationFeature.INDENT_OUTPUT)
 
     companion object Billing {
         @JvmStatic
@@ -28,13 +38,6 @@ class Billing {
                             .desc("destination file")
                             .build()
             )
-            options.addOption(
-                    Option.builder("h")
-                            .longOpt("help")
-                            .required(false)
-                            .desc("show usage")
-                            .build()
-            )
 
             val billing = Billing();
             billing.run(options, args)
@@ -49,7 +52,35 @@ class Billing {
             }
 
             println("Importing taps...")
-            var trips = loadCustomersTrips(cmd.getOptionValue("s"))
+            val summaries = loadCustomersTrips(cmd.getOptionValue("s"))
+                .map {  trip ->
+                    when(val either = tripService.calculatePrice(trip)) {
+                        is Left -> either
+                        is Right -> Right(trip.copy(zoneFrom = either.value.zoneFrom, zoneTo = either.value.zoneTo, costInCents = either.value.costInCents))
+                    }
+                }
+                .groupBy { it.isLeft }
+                .also {
+                    println("${it[true]?.size ?: 0} error(s) while calculating prices.")
+                    it[true]?.forEach { err -> println(err.left()?.message) }
+                }
+                .filter { it.key == false }
+                .flatMap { it.value }
+                .map { it.right()!! }
+                .groupBy { it.customerId }
+                .map {
+                    val totalPrice = it.value.sumOf { price -> price.costInCents!! }
+                    CustomerSummary(customerId = it.key, totalCostInCents = totalPrice, trips = it.value.sortedBy { trip -> trip.startedJourneyAt })
+                }
+                .sortedBy { it.customerId }
+
+
+            File(cmd.getOptionValue("d")).printWriter()
+                .use { out ->
+                    println("Writing result to ${cmd.getOptionValue("d")}")
+                    out.write(mapper.writeValueAsString(BillingReport(summaries)))
+                }
+
 
         } catch (e: ParseException) {
             println("Syntax error. " + e.message)
@@ -58,14 +89,13 @@ class Billing {
     }
 
     private fun loadCustomersTrips(fileName: String): List<Trip> {
-        val tripParser = TripService();
-        return tripParser.parseTaps(File(fileName))
-            .foldRight(Pair(ArrayList<Throwable>(), ArrayList<Trip>())) {either, pair ->
+        return tripService.parseTaps(File(fileName))
+            .foldRight(Pair(ArrayList<Throwable>(), ArrayList<Trip>())) {either, acc ->
                 when (either) {
-                    is Either.Left -> pair.first.add(either.value)
-                    is Either.Right -> pair.second.add(either.value)
+                    is Left -> acc.first.add(either.value)
+                    is Right -> acc.second.add(either.value)
                 }
-                pair
+                acc
             }
             .also { pair ->
                 println("${pair.first.size} error(s) during taps import.")
