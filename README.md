@@ -125,3 +125,18 @@ For each of the customers' trips we output the following:
 2. We do not require elaborate console output, and want to see how YOU write code.  Please do not use dependency injection frameworks, aspect oriented frameworks, such as spring or any other code generation frameworks such as Lombok.  Significant consideration is given to how well you can meet requirements.
 3. We are looking for a professional object oriented submission in Java or Kotlin, with unit tests which demonstrates your skills, of how you would deliver a project at work. An important point is it must build in any IDE by using a either gradle or maven to define the build process and any dependencies. If we cannot build it, it will fail.
 4. We expect your main method to take 2 input parameters, the first is the input file path and the second is the output file path.  No other inputs should be required to run your program.
+
+## Implementation
+This implementation has been done with Kotlin 1.4. It has been tested successfully with a JDK 1.8 and a JDK 15.
+
+## Compiling the project
+Maven is used as a build tool. You can compile the project with a simple :
+```bash
+./mvnw clean install
+```
+
+## Usage
+To run the project, be sure to be in the project base directory and execute the following command :
+```bash
+java -jar target/train-bill-calculation-1.0.0-SNAPSHOT-jar-with-dependencies.jar -s <source_file> -d <destination_file>
+```
